@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="fr-CA">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <title>Mon vrai $/heure – JP finance</title>
+    <meta
+      name="description"
+      content="Calcule ton vrai salaire horaire avec tes pourboires, tes retenues 2026 du Québec et ton budget. Gratuit, sans pub, hors ligne."
+    />
+    <meta name="theme-color" content="#0F1F3D" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Vrai $/h" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Mon vrai $/heure – JP finance" />
+    <meta
+      property="og:description"
+      content="Ton vrai $/heure avec pourboires et retenues du Québec. Gratuit, sans pub, hors ligne."
+    />
+    <meta property="og:image" content="og-image.png" />
+    <meta property="og:locale" content="fr_CA" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link
+      rel="apple-touch-startup-image"
+      href="splash/splash-1170x2532.png"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="splash/splash-1179x2556.png"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="splash/splash-1290x2796.png"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="splash/splash-1125x2436.png"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="splash/splash-750x1334.png"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)"
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="modulepreload" href="src/calc.js" />
+    <link rel="modulepreload" href="src/taxes.js" />
+    <link rel="modulepreload" href="src/storage.js" />
+    <script type="module" src="src/ui.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Aller au contenu</a>
+    <header>
+      <img src="icon-192.png" alt="" />
+      <h1>Mon <b class="logo">vrai $/heure</b><small>JP finance · pourboires, paie et impôts</small></h1>
+      <span class="badge" id="off" role="status">Hors ligne</span
+      ><button class="lang" id="lang" aria-label="EN : changer de langue (English)">EN</button>
+    </header>
+    <main id="main" tabindex="-1">
+      <div class="bandeau" id="rappel" role="status">
+        <span>🛟 Pense à sauvegarder tes données (dernière sauvegarde il y a plus de 7 jours).</span
+        ><button class="mini" id="rappel-b">Sauvegarder</button>
+      </div>
+      <div class="bandeau maj" id="maj" role="alert">
+        <span>✨ Nouvelle version disponible</span><button class="mini" id="maj-b">Mettre à jour</button>
+      </div>
+      <section id="s-accueil" class="on">
+        <div class="hero" id="hero">
+          <div class="l">Net estimé cette semaine</div>
+          <div class="v" id="h-net">0 $</div>
+          <div class="s" id="h-sub">Ajoute ton premier quart avec le bouton ＋</div>
+          <div class="rings">
+            <div class="ring">
+              <svg width="74" height="74" viewBox="0 0 74 74" aria-hidden="true">
+                <circle cx="37" cy="37" r="31" stroke="#ffffff22" stroke-width="8" fill="none" />
+                <circle
+                  id="rg-s"
+                  cx="37"
+                  cy="37"
+                  r="31"
+                  stroke="#34D399"
+                  stroke-width="8"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-dasharray="194.8"
+                  stroke-dashoffset="194.8"
+                  transform="rotate(-90 37 37)"
+                /></svg
+              ><b id="rg-st">0 %</b>objectif semaine
+            </div>
+            <div class="ring">
+              <svg width="74" height="74" viewBox="0 0 74 74" aria-hidden="true">
+                <circle cx="37" cy="37" r="31" stroke="#ffffff22" stroke-width="8" fill="none" />
+                <circle
+                  id="rg-m"
+                  cx="37"
+                  cy="37"
+                  r="31"
+                  stroke="#F2B705"
+                  stroke-width="8"
+                  fill="none"
+                  stroke-linecap="round"
+                  stroke-dasharray="194.8"
+                  stroke-dashoffset="194.8"
+                  transform="rotate(-90 37 37)"
+                /></svg
+              ><b id="rg-mt">0 %</b>objectif mois
+            </div>
+          </div>
+        </div>
+        <div class="card" id="exp-card">
+          <h2>⚡ Entrée express</h2>
+          <p class="note" style="margin-top: -6px">
+            Total des pourboires + heures. Le reste est repris de ton dernier quart.
+          </p>
+          <div class="chips" id="x-jobs" style="margin-bottom: 8px"></div>
+          <div class="express">
+            <div>
+              <label for="x-tot">Pourboires total ($)</label
+              ><input id="x-tot" type="number" inputmode="decimal" step="0.01" placeholder="0" />
+            </div>
+            <div><label for="x-h">Heures</label><input id="x-h" type="number" inputmode="decimal" step="0.25" /></div>
+          </div>
+          <button class="btn" id="x-save">Enregistrer</button>
+          <p class="note" id="x-info" style="text-align: center; margin: 8px 0 0"></p>
+        </div>
+        <div class="card">
+          <h2>💡 Tes insights</h2>
+          <div id="ins"></div>
+        </div>
+        <div class="card">
+          <h2>Détail de la semaine</h2>
+          <div class="kpi">
+            <div>
+              <div class="l">Net estimé</div>
+              <div class="v vert" id="k-net">–</div>
+            </div>
+            <div>
+              <div class="l">$/h net</div>
+              <div class="v" id="k-h">–</div>
+            </div>
+            <div>
+              <div class="l">Brut</div>
+              <div class="v" id="k-brut" style="font-size: 20px">–</div>
+            </div>
+            <div style="background: var(--goldBg)">
+              <div class="l">💵 Cash à mettre de côté</div>
+              <div class="v or" id="k-cash" style="font-size: 20px">–</div>
+            </div>
+          </div>
+          <button class="btn sec" id="rep" style="margin-top: 10px">↻ Répéter le dernier quart</button>
+        </div>
+        <div class="card">
+          <div class="seg"><button id="g-sem" class="on">Semaine</button><button id="g-mois">Mois</button></div>
+          <div class="nav3">
+            <button class="mini" id="g-prev" aria-label="Période précédente">◀</button><b id="g-titre"></b
+            ><button class="mini" id="g-next" aria-label="Période suivante">▶</button
+            ><button class="mini" id="g-auj">Auj.</button>
+          </div>
+          <label style="font-weight: 500; display: flex; gap: 8px; align-items: center"
+            ><input type="checkbox" id="g-det" style="width: 22px; min-height: 22px" /> Afficher heures et $/h
+            net</label
+          >
+          <div id="grille"></div>
+          <div id="g-tot"></div>
+          <div id="g-jour"></div>
+        </div>
+        <div class="card">
+          <h2>Derniers quarts</h2>
+          <div class="liste" id="recent"></div>
+          <p class="note">
+            Touche un quart pour le modifier. Glisse vers la gauche ou appuie longtemps pour le supprimer.
+          </p>
+        </div>
+      </section>
+      <section id="s-quarts">
+        <div class="card">
+          <h2>Tous mes quarts</h2>
+          <div class="liste" id="list"></div>
+        </div>
+        <div class="card">
+          <h2>Par semaine</h2>
+          <canvas id="chart" width="600" height="170"></canvas>
+          <div id="wktable"></div>
+        </div>
+        <div class="card">
+          <h2>Par mois</h2>
+          <div id="mo"></div>
+        </div>
+        <div class="card">
+          <h2>Par emploi</h2>
+          <div id="byjob"></div>
+        </div>
+        <div class="card">
+          <h2>Moyenne par poste</h2>
+          <div id="byrole"></div>
+        </div>
+        <div class="card">
+          <h2>Moyenne par jour</h2>
+          <div id="byday"></div>
+        </div>
+      </section>
+      <section id="s-impot">
+        <div class="card">
+          <p class="note">
+            <span class="pill">Estimation seulement, pas un conseil fiscal</span> Calcul simplifié (montants personnels
+            de base, taux moyen annualisé). Tes vraies retenues dépendent de ta paie, de tes formulaires TD1/TP-1015.3
+            et de ta déclaration.
+          </p>
+          <div id="imp-hyp" class="note"></div>
+        </div>
+        <div class="card">
+          <h2>Cette semaine</h2>
+          <div id="imp-wk"></div>
+        </div>
+        <div class="card">
+          <h2>Ce mois-ci</h2>
+          <div id="imp-mo"></div>
+        </div>
+        <div class="card">
+          <h2>📄 Sommaire annuel (style T4 / RL-1)</h2>
+          <div class="chips" id="an-chips" style="margin-bottom: 8px"></div>
+          <div id="annuel"></div>
+        </div>
+        <div class="card">
+          <h2>Par quart (10 derniers)</h2>
+          <div id="imp-list"></div>
+        </div>
+        <div class="card">
+          <h2>D'où viennent les chiffres (2026)</h2>
+          <ul class="note">
+            <li>
+              Fédéral : 14 % jusqu'à 58 523 $, 20,5 % jusqu'à 117 045 $, 26 %, 29 %, 33 % ; montant personnel 16 452 $ ;
+              abattement du Québec 16,5 %.
+              <a
+                href="https://www.canada.ca/fr/agence-revenu/services/impot/particuliers/taux-imposition-tranches/annee-courante.html"
+                target="_blank"
+                rel="noopener"
+                >canada.ca</a
+              >
+            </li>
+            <li>
+              Québec : 14 % jusqu'à 54 345 $, 19 % jusqu'à 108 680 $, 24 % jusqu'à 132 245 $, 25,75 % ; montant
+              personnel 18 952 $ ; déduction pour travailleurs 6 % (max 1 450 $).
+              <a
+                href="https://www.revenuquebec.ca/fr/citoyens/declaration-de-revenus/produire-votre-declaration-de-revenus/taux-dimposition/"
+                target="_blank"
+                rel="noopener"
+                >revenuquebec.ca</a
+              >
+            </li>
+            <li>
+              RRQ : 6,30 % de 3 500 $ à 74 600 $ (max 4 479,30 $) + 2<sup>e</sup> cotisation supplémentaire 4 % de 74
+              600 $ à 85 000 $ (max 416 $). RQAP : 0,430 % jusqu'à 103 000 $.
+              <a
+                href="https://www.revenuquebec.ca/fr/entreprises/retenues-a-la-source-et-cotisations-de-lemployeur/employeur-principaux-changements-2026/"
+                target="_blank"
+                rel="noopener"
+                >revenuquebec.ca</a
+              >
+            </li>
+            <li>
+              Assurance-emploi (taux Québec) : 1,30 % jusqu'à 68 900 $ (max 895,70 $).
+              <a
+                href="https://www.canada.ca/fr/agence-revenu/services/formulaires-publications/retenues-paie/t4032-tables-retenues-paie/t4032qc-jan/t4032qc-janvier-renseignements-generaux.html"
+                target="_blank"
+                rel="noopener"
+                >canada.ca</a
+              >
+            </li>
+            <li>Vérifié le 14 octobre 2026. Taux modifiables dans Réglages.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2>Pourboires et impôts (Québec)</h2>
+          <ul class="note">
+            <li>
+              Les pourboires sont un <b>revenu imposable</b>, en argent comptant ou par carte (Revenu Québec et ARC).
+            </li>
+            <li>
+              Dans un établissement visé (restaurant, bar, hôtel…), tu dois déclarer par écrit à ton employeur la
+              totalité de tes pourboires à chaque période de paie (formulaire <b>TP-1019.4</b> ou équivalent).
+            </li>
+            <li>
+              L'employeur les ajoute à ton salaire pour les retenues et ton relevé 1. Si tes pourboires déclarés sont
+              sous 8 % des ventes visées, il peut devoir t'attribuer un montant.
+            </li>
+            <li>
+              Déclarer tous tes pourboires peut améliorer certaines protections (assurance-emploi, RQAP, vacances,
+              fériés).
+            </li>
+            <li>
+              Le salaire minimum au pourboire ne s'applique qu'aux salariés qui reçoivent habituellement des pourboires
+              ; sinon, c'est le taux général.
+            </li>
+          </ul>
+          <p class="note">
+            Pour ta situation :
+            <a
+              href="https://www.revenuquebec.ca/fr/citoyens/situation-de-vie/travail/pourboires/"
+              target="_blank"
+              rel="noopener"
+              >Revenu Québec – pourboires</a
+            >, l'ARC ou un professionnel.
+          </p>
+        </div>
+      </section>
+      <section id="s-budget">
+        <div class="card">
+          <h2>Tes dépenses d'un mois normal</h2>
+          <div id="exp"></div>
+          <button class="mini" id="addexp" style="margin-top: 8px">+ Ajouter une ligne</button>
+          <p>
+            <b>Total : <span id="exptot"></span></b>
+          </p>
+        </div>
+        <div class="card">
+          <h2>Ce que tu reçois vraiment</h2>
+          <p class="note">
+            Revenu brut suivi par mois. Méthode du « salaire fixe » : tu te verses un montant stable basé sur ta moyenne
+            des 3 derniers mois, et le surplus va au coussin.
+          </p>
+          <div id="bud"></div>
+        </div>
+      </section>
+      <section id="s-param">
+        <div class="card">
+          <h2>Réglages</h2>
+          <label for="p-name">Ton nom (facultatif)</label><input id="p-name" />
+          <div class="row">
+            <div>
+              <label for="p-mintip">Minimum au pourboire ($/h)</label
+              ><input type="number" step="0.01" inputmode="decimal" id="p-mintip" />
+            </div>
+            <div>
+              <label for="p-mingen">Minimum général ($/h)</label
+              ><input type="number" step="0.01" inputmode="decimal" id="p-mingen" />
+            </div>
+          </div>
+          <p class="note">
+            Par défaut : <b>13,30 $</b> (pourboire) et <b>16,60 $</b> (général), en vigueur depuis le 1<sup>er</sup> mai
+            2026, vérifiés le 14 octobre 2026. Sources :
+            <a
+              href="https://www.cnesst.gouv.qc.ca/fr/conditions-travail/salaire-paye/salaire"
+              target="_blank"
+              rel="noopener"
+              >CNESST</a
+            >,
+            <a
+              href="https://www.quebec.ca/nouvelles/actualites/details/hausse-du-salaire-minimum-des-aujourdhui-le-taux-general-du-salaire-minimum-setablit-a-1660-lheure-70097"
+              target="_blank"
+              rel="noopener"
+              >Québec.ca</a
+            >.
+          </p>
+          <label>Taux de base par poste</label>
+          <div id="p-roles"></div>
+          <div class="row">
+            <div><label for="p-goal">Objectif $/h</label><input type="number" inputmode="decimal" id="p-goal" /></div>
+            <div>
+              <label for="p-cush">Coussin visé (mois)</label><input type="number" inputmode="decimal" id="p-cush" />
+            </div>
+          </div>
+          <label for="p-cush0">Coussin de départ ($)</label><input type="number" inputmode="decimal" id="p-cush0" />
+          <div class="row">
+            <div>
+              <label for="p-os">Objectif net / semaine ($)</label><input type="number" inputmode="decimal" id="p-os" />
+            </div>
+            <div>
+              <label for="p-om">Objectif net / mois ($)</label><input type="number" inputmode="decimal" id="p-om" />
+            </div>
+          </div>
+          <label for="p-jobs">Mes emplois / restos (un par ligne)</label
+          ><textarea id="p-jobs" rows="3" placeholder="Gaspar&#10;Bar du coin"></textarea>
+          <h2 style="margin-top: 18px">Impôts (estimation)</h2>
+          <label for="p-rev">Revenu annuel estimé ($, vide = calculé à partir de tes quarts)</label
+          ><input type="number" inputmode="decimal" id="p-rev" />
+          <label for="p-decl">Pourboires cash déclarés (%)</label
+          ><input type="number" inputmode="decimal" id="p-decl" min="0" max="100" />
+          <p class="note">
+            La loi t'oblige à déclarer à ton employeur 100 % de tes pourboires (TP-1019.4). Un % plus bas sert seulement
+            à voir l'écart à prévoir.
+          </p>
+          <label style="display: flex; gap: 8px; align-items: center; font-weight: 500"
+            ><input type="checkbox" id="p-r8" style="width: 22px; min-height: 22px" /> Appliquer la règle des 8 %
+            (attribution par l'employeur)</label
+          >
+          <label for="p-taux">Ajuster les taux 2026 (JSON, avancé)</label
+          ><textarea id="p-taux" rows="3" style="font-size: 13px; font-family: monospace"></textarea>
+          <p class="note">
+            Ex. {"aeTaux":0.013}. Vide = taux officiels 2026. Estimation seulement, pas un conseil fiscal.
+          </p>
+          <button class="btn" id="psave">Enregistrer</button>
+          <button class="btn sec" id="csv">Exporter en CSV</button>
+          <h2 style="margin-top: 18px">🛟 Sauvegarde (aucune perte de données)</h2>
+          <p class="note">
+            Tes données restent sur ton téléphone. Fais une sauvegarde de temps en temps (Fichiers, iCloud Drive,
+            courriel à toi-même).
+          </p>
+          <button class="btn" id="bk">⬇️ Sauvegarder (fichier .json)</button
+          ><button class="btn sec" id="rs">⬆️ Restaurer une sauvegarde</button
+          ><input type="file" id="rs-f" accept=".json,application/json" hidden />
+          <p class="note" id="bk-info"></p>
+          <h2 style="margin-top: 18px">🔒 Verrou NIP (facultatif)</h2>
+          <p class="note">
+            Un NIP de 4 à 6 chiffres cache tes montants quand tu ouvres l'appli. Ce n'est pas du chiffrement.
+          </p>
+          <div class="row">
+            <input
+              type="password"
+              inputmode="numeric"
+              id="p-pin"
+              placeholder="Nouveau NIP"
+              aria-label="Nouveau NIP"
+            /><button class="mini" id="p-pinb">Activer</button>
+          </div>
+          <button class="mini" id="p-pinoff" style="margin-top: 8px">Retirer le NIP</button>
+          <h2 style="margin-top: 18px">🧰 Journal d'erreurs (soutien)</h2>
+          <p class="note">
+            Si un problème survient, exporte ce journal et envoie-le à JP finance. Il ne contient aucun montant.
+          </p>
+          <pre class="log" id="log" aria-live="polite"></pre>
+          <div class="row">
+            <button class="mini" id="log-x">Exporter le journal</button><button class="mini" id="log-c">Vider</button>
+          </div>
+          <p class="note" style="margin-top: 14px">
+            <a href="confidentialite.html">Politique de confidentialité</a> ·
+            <a href="conditions.html">Conditions et avis</a> · Version <span id="ver">6.0.0</span>
+          </p>
+          <button class="btn sec" id="demo">Charger des exemples</button>
+          <button class="btn sec" id="reonb">Revoir l'accueil (3 étapes)</button>
+          <button class="mini" id="wipe" style="margin-top: 16px; color: var(--warn)">
+            Effacer toutes les données
+          </button>
+          <p class="note">Tes données restent sur ton téléphone seulement.</p>
+        </div>
+      </section>
+    </main>
+    <nav aria-label="Navigation principale">
+      <button data-s="s-accueil" class="on"><span>🏠</span>Accueil</button
+      ><button data-s="s-quarts"><span>📋</span>Quarts</button
+      ><button class="plus" id="nav-plus" aria-label="Quart : ajouter un quart"><i>＋</i><em>Quart</em></button
+      ><button data-s="s-impot"><span>🧾</span>Impôts</button
+      ><button data-s="s-budget,s-param"><span>☰</span>Plus</button>
+    </nav>
+    <div class="lock" id="lock">
+      <div style="font-size: 48px">🔒</div>
+      <h2>Mon vrai $/heure</h2>
+      <p>Entre ton NIP</p>
+      <input type="password" inputmode="numeric" id="lk" autocomplete="off" aria-label="NIP" />
+      <p id="lk-e" style="color: #f87171; min-height: 20px"></p>
+    </div>
+    <div class="sheet" id="sheet" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="sh-t">
+      <div class="in">
+        <div class="hd">
+          <h2 id="sh-t">Nouveau quart</h2>
+          <button class="mini" id="sh-x" aria-label="Fermer">✕</button>
+        </div>
+        <div class="chips" id="f-jobs" style="margin-top: 10px"></div>
+        <div class="chips" id="f-roles" style="margin-top: 10px"></div>
+        <div class="row">
+          <div><label for="f-date">Date</label><input type="date" id="f-date" /></div>
+          <div>
+            <label for="f-rate">Taux de base ($/h)</label
+            ><input type="number" step="0.01" inputmode="decimal" id="f-rate" />
+          </div>
+        </div>
+        <label for="f-hours">Heures</label>
+        <div class="step">
+          <button id="h-m" aria-label="Moins 15 minutes">−</button
+          ><input type="number" step="0.25" min="0" inputmode="decimal" id="f-hours" placeholder="0" /><button
+            id="h-p"
+            aria-label="Plus 15 minutes"
+          >
+            +
+          </button>
+        </div>
+        <div class="chips" id="h-chips" style="margin-top: 8px"></div>
+        <div class="row">
+          <div>
+            <label for="f-card">💳 Pourb. carte ($)</label
+            ><input type="number" step="0.01" inputmode="decimal" id="f-card" placeholder="0" />
+          </div>
+          <div>
+            <label for="f-cash">💵 Pourb. cash ($)</label
+            ><input type="number" step="0.01" inputmode="decimal" id="f-cash" placeholder="0" />
+          </div>
+        </div>
+        <label>Tip-out remis (% des ventes)</label>
+        <div class="chips" id="to-chips"></div>
+        <div id="sales-wrap">
+          <label for="f-sales">Ventes du quart ($)</label
+          ><input
+            type="number"
+            step="0.01"
+            inputmode="decimal"
+            id="f-sales"
+            placeholder="Pour calculer le tip-out en %"
+          />
+        </div>
+        <details id="more">
+          <summary>Plus d'options</summary>
+          <div class="row">
+            <div>
+              <label for="f-todir">Tip-out</label
+              ><select id="f-todir">
+                <option value="donne">Je remets</option>
+                <option value="recu">Je reçois</option>
+              </select>
+            </div>
+            <div>
+              <label for="f-tomode">Calcul</label
+              ><select id="f-tomode">
+                <option value="pctVentes">% des ventes</option>
+                <option value="pctPourboires">% des pourboires</option>
+                <option value="montant">Montant ($)</option>
+              </select>
+            </div>
+          </div>
+          <label for="f-toval">Valeur du tip-out (% ou $)</label
+          ><input type="number" step="0.01" inputmode="decimal" id="f-toval" /> <label for="f-notes">Notes</label
+          ><input id="f-notes" placeholder="Terrasse, fête privée…" />
+        </details>
+        <div class="card" style="margin: 12px 0 0; background: #0f1f3d; color: #fff">
+          <div class="row">
+            <div>
+              <div class="note" style="color: #c9d3e3">Brut</div>
+              <div class="big" id="pv-b">–</div>
+            </div>
+            <div>
+              <div class="note" style="color: #c9d3e3">Net estimé</div>
+              <div class="big" id="pv-n" style="color: #34d399">–</div>
+            </div>
+          </div>
+          <div id="pv-d" class="note" style="color: #c9d3e3"></div>
+        </div>
+        <button class="btn" id="save">Enregistrer</button
+        ><button class="btn sec" id="sh-rep">↻ Remplir comme le dernier quart</button>
+        <button class="btn sec" id="sh-del" style="color: var(--warn); display: none">Supprimer ce quart</button>
+      </div>
+    </div>
+    <div class="sheet onb" id="onb" role="dialog" aria-modal="true" aria-labelledby="onb-t">
+      <div class="in">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <h2 id="onb-t"></h2>
+        <div id="onb-b"></div>
+        <button class="btn" id="onb-n">Suivant</button><button class="btn sec" id="onb-s">Passer</button>
+      </div>
+    </div>
+    <div class="toast" id="toast" role="status"><span id="toast-t"></span><button id="toast-u">Annuler</button></div>
+  </body>
+</html>

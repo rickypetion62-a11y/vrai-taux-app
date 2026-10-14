@@ -56,6 +56,7 @@ import {
 } from './storage.js';
 import { nouveauSel, hacherNip, verifierNip } from './security.js';
 import { t as tr, appliquerLangue } from './i18n.js';
+import { CHAMPS, lireCSV, detecterColonnes, convertir, totauxQuarts } from './importcsv.js';
 
 try {
   const r = await fetch('taux-2026.json');
@@ -1178,6 +1179,127 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
+
+/* ---- Import CSV d'une autre appli ---- */
+let IMP = null;
+const el = (tag, props = {}, kids = []) => {
+  const e = Object.assign(document.createElement(tag), props);
+  for (const k of [].concat(kids)) e.append(k);
+  return e;
+};
+function apercuImport() {
+  const z = $('csv-prev');
+  z.replaceChildren();
+  const R = convertir(IMP.lignes, IMP.map, {
+    emploiDefaut: propreTxt($('csv-job').value),
+    tauxDefaut: n($('csv-taux').value) || 13.3,
+    source: IMP.source,
+  });
+  IMP.R = R;
+  const T = totauxQuarts(R.quarts);
+  const deja = new Set(S.map((q) => q.id));
+  const nouveaux = R.quarts.filter((q) => !deja.has(q.id)).length;
+  z.append(
+    el('p', {
+      textContent: `${R.quarts.length} quarts lus (${nouveaux} nouveaux) · du ${R.totaux.du || '–'} au ${R.totaux.au || '–'} · ${R.rejets.length} ligne(s) rejetée(s) · ${R.anomalies.length} anomalie(s) à vérifier`,
+    }),
+    el('p', {
+      className: 'note',
+      textContent: `Source : ${T.heures} h · pourboires cash ${money(R.totaux.cash)} · carte ${money(R.totaux.card)} · tip-out ${money(R.totaux.tipout)} · salaire ${money(R.totaux.salaire)}. Dans l'appli : total ${money(T.total)} · ${money(T.eff)}/h.`,
+    }),
+  );
+  const tb = el('table');
+  tb.append(
+    el(
+      'tr',
+      {},
+      ['Date', 'Emploi', 'h', 'Cash', 'Carte', 'Tip-out'].map((h) => el('th', { textContent: h })),
+    ),
+  );
+  for (const q of R.quarts.slice(0, 5))
+    tb.append(
+      el(
+        'tr',
+        {},
+        [q.date, q.job || '–', q.hours, money(n(q.cash)), money(n(q.card)), money(n(q.toVal))].map((v) =>
+          el('td', { textContent: String(v) }),
+        ),
+      ),
+    );
+  z.append(tb);
+  if (R.anomalies.length)
+    z.append(
+      el('p', {
+        className: 'note',
+        textContent:
+          'Anomalies : ' +
+          R.anomalies
+            .slice(0, 6)
+            .map((a) => `${a.date} ${a.type === 'heures-nulles' ? '0 h' : a.detail}`)
+            .join(', ') +
+          (R.anomalies.length > 6 ? '…' : ''),
+      }),
+    );
+  $('csv-ok').disabled = !nouveaux;
+}
+const propreTxt = (v) =>
+  String(v || '')
+    .replace(/[<>]/g, '')
+    .trim()
+    .slice(0, 60);
+function grilleCorrespondance() {
+  const m = $('csv-map');
+  m.replaceChildren();
+  for (const [champ, lib] of Object.entries(CHAMPS)) {
+    const sel = el('select', { id: 'map-' + champ });
+    sel.append(el('option', { value: '', textContent: '(aucune)' }));
+    IMP.entetes.forEach((h, i) => sel.append(el('option', { value: String(i), textContent: h || `Colonne ${i + 1}` })));
+    sel.value = IMP.map[champ] != null ? String(IMP.map[champ]) : '';
+    sel.onchange = () => {
+      if (sel.value === '') delete IMP.map[champ];
+      else IMP.map[champ] = +sel.value;
+      apercuImport();
+    };
+    m.append(el('label', { htmlFor: sel.id, textContent: lib }), sel);
+  }
+}
+$('csv-b').onclick = () => $('csv-f').click();
+$('csv-f').onchange = async (e) => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  try {
+    const { entetes, lignes } = lireCSV(await f.text());
+    if (!entetes.length || !lignes.length) throw new Error('Fichier CSV vide.');
+    const { map, source } = detecterColonnes(entetes);
+    IMP = { entetes, lignes, map, source };
+    $('csv-zone').hidden = false;
+    $('csv-src').textContent = `Format détecté : ${source} · ${lignes.length} lignes · ${entetes.length} colonnes`;
+    $('csv-map-d').open = map.date == null || (map.cash == null && map.card == null);
+    grilleCorrespondance();
+    apercuImport();
+  } catch (err) {
+    journal('import', err);
+    alert(err.message);
+  }
+};
+$('csv-job').oninput = () => IMP && apercuImport();
+$('csv-taux').oninput = () => IMP && apercuImport();
+$('csv-ok').onclick = () => {
+  if (!IMP || !IMP.R) return;
+  const avant = S.length;
+  S = fusionner(IMP.R.quarts, S); // les quarts existants gardent la priorité
+  const jobs = [...new Set(IMP.R.quarts.map((q) => q.job).filter(Boolean))];
+  P.jobs = [...new Set([...(P.jobs || []), ...jobs])];
+  if (!P.job && jobs[0]) P.job = jobs[0];
+  save();
+  loadParam();
+  render();
+  buzz();
+  toast(`${S.length - avant} quarts importés`);
+  $('csv-zone').hidden = true;
+  IMP = null;
+};
 /* ---- Accueil 3 étapes ---- */
 let O = 0;
 function onb() {

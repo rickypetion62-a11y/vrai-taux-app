@@ -1,5 +1,5 @@
 /* Service worker : cache versionné, hors ligne d'abord, mise à jour sur demande de l'utilisateur. */
-const VERSION = 'vraih-v6';
+const VERSION = 'vraih-v7';
 const FICHIERS = [
   './',
   'index.html',
@@ -12,6 +12,7 @@ const FICHIERS = [
   'src/storage.js',
   'src/security.js',
   'src/i18n.js',
+  'src/importcsv.js',
   'icon-192.png',
   'icon-512.png',
   'icon-maskable-512.png',

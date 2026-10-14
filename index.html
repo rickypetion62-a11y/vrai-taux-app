@@ -139,6 +139,21 @@
           <button class="btn" id="x-save">Enregistrer</button>
           <p class="note" id="x-info" style="text-align: center; margin: 8px 0 0"></p>
         </div>
+        <div class="card" id="paye-c">
+          <h2 id="paye-t">💵 Prochaine paye</h2>
+          <div id="paye"></div>
+          <details id="paye-pd">
+            <summary>Payes passées</summary>
+            <div id="paye-p"></div>
+          </details>
+        </div>
+        <div class="card">
+          <div class="row" style="align-items: center">
+            <h2 style="margin: 0">📈 Cumul de l'année</h2>
+            <select id="ytd-a" aria-label="Année du cumul"></select>
+          </div>
+          <div id="ytd"></div>
+        </div>
         <div class="card">
           <h2>💡 Tes insights</h2>
           <div id="ins"></div>
@@ -223,6 +238,25 @@
             et de ta déclaration.
           </p>
           <div id="imp-hyp" class="note"></div>
+        </div>
+        <div class="card">
+          <div class="row" style="align-items: center">
+            <h2 style="margin: 0">📈 Cumul de l'année</h2>
+            <select id="ytd2-a" aria-label="Année du cumul (impôts)"></select>
+          </div>
+          <div id="ytd2"></div>
+        </div>
+        <div class="card" id="t4-c">
+          <h2>🧾 Aperçu T4 / Relevé 1 (estimation)</h2>
+          <div id="t4"></div>
+        </div>
+        <div class="card">
+          <h2>📅 Total sur une période</h2>
+          <div class="row">
+            <div><label for="tp-du">Du</label><input type="date" id="tp-du" /></div>
+            <div><label for="tp-au">Au</label><input type="date" id="tp-au" /></div>
+          </div>
+          <div id="tp"></div>
         </div>
         <div class="card">
           <h2>Cette semaine</h2>
@@ -400,6 +434,38 @@
             ><input type="checkbox" id="p-r8" style="width: 22px; min-height: 22px" /> Appliquer la règle des 8 %
             (attribution par l'employeur)</label
           >
+          <h2 style="margin-top: 18px">💵 Ta paie</h2>
+          <div class="row">
+            <div>
+              <label for="p-pf">Fréquence</label
+              ><select id="p-pf">
+                <option value="sem">Hebdomadaire</option>
+                <option value="2sem">Aux deux semaines</option>
+                <option value="bimens">Deux fois par mois (15 et fin du mois)</option>
+                <option value="mens">Mensuelle</option>
+              </select>
+            </div>
+            <div>
+              <label for="p-pj">Jour de paye</label
+              ><select id="p-pj">
+                <option value="1">Lundi</option>
+                <option value="2">Mardi</option>
+                <option value="3">Mercredi</option>
+                <option value="4">Jeudi</option>
+                <option value="5">Vendredi</option>
+                <option value="6">Samedi</option>
+                <option value="0">Dimanche</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div><label for="p-pr">Une date de paye (référence)</label><input type="date" id="p-pr" /></div>
+            <div>
+              <label for="p-pd">Jours entre fin de période et paye</label
+              ><input type="number" inputmode="numeric" min="0" max="31" id="p-pd" />
+            </div>
+          </div>
+          <p class="note">Par défaut : la période se termine le dimanche avant la paye (5 jours avant un vendredi).</p>
           <label for="p-taux">Ajuster les taux 2026 (JSON, avancé)</label
           ><textarea id="p-taux" rows="3" style="font-size: 13px; font-family: monospace"></textarea>
           <p class="note">
@@ -466,7 +532,7 @@
           </div>
           <p class="note" style="margin-top: 14px">
             <a href="confidentialite.html">Politique de confidentialité</a> ·
-            <a href="conditions.html">Conditions et avis</a> · Version <span id="ver">8.0.0</span>
+            <a href="conditions.html">Conditions et avis</a> · Version <span id="ver">9.0.0</span>
           </p>
           <button class="btn sec" id="demo">Charger des exemples</button>
           <button class="btn sec" id="reonb">Revoir l'accueil (3 étapes)</button>
@@ -582,7 +648,7 @@
     </div>
     <div class="sheet onb" id="onb" role="dialog" aria-modal="true" aria-labelledby="onb-t">
       <div class="in">
-        <div class="dots"><i></i><i></i><i></i></div>
+        <div class="dots"><i></i><i></i><i></i><i></i></div>
         <h2 id="onb-t"></h2>
         <div id="onb-b"></div>
         <button class="btn" id="onb-n">Suivant</button><button class="btn sec" id="onb-s">Passer</button>

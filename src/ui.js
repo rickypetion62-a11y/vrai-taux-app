@@ -56,6 +56,19 @@ import {
 } from './storage.js';
 import { nouveauSel, hacherNip, verifierNip } from './security.js';
 import { t as tr, appliquerLangue } from './i18n.js';
+import {
+  cfgPaye,
+  PAYE_DEF,
+  FREQS,
+  prochainePaye,
+  bulletin,
+  bulletinsPasses,
+  totalPeriode,
+  cumulAnnee,
+  annees,
+  apercuT4,
+  dateCourte,
+} from './paye.js';
 import { CHAMPS, lireCSV, detecterColonnes, convertir, totauxQuarts } from './importcsv.js';
 
 try {
@@ -99,6 +112,7 @@ const DEF = {
   job: '',
   pinH: '',
   pinS: '',
+  ...PAYE_DEF,
   rates: { serveur: 13.3, barman: 13.3, busboy: 13.3, hotesse: 16.6, maitre: 16.6 },
 };
 const store = creerMagasin();
@@ -897,6 +911,10 @@ function loadParam() {
   $('p-os').value = P.objSem;
   $('p-om').value = P.objMois;
   $('p-jobs').value = (P.jobs || []).join('\n');
+  $('p-pf').value = P.payFreq;
+  $('p-pj').value = String(P.payJour);
+  $('p-pr').value = P.payRef;
+  $('p-pd').value = P.payDecal;
   $('p-roles').innerHTML = Object.entries(ROLES)
     .map(
       ([k, v]) =>
@@ -919,6 +937,10 @@ $('psave').onclick = () => {
   P.taux = $('p-taux').value.trim();
   P.objSem = n($('p-os').value);
   P.objMois = n($('p-om').value);
+  P.payFreq = $('p-pf').value;
+  P.payJour = +$('p-pj').value;
+  P.payRef = $('p-pr').value || PAYE_DEF.payRef;
+  P.payDecal = Math.max(0, Math.round(n($('p-pd').value)));
   P.jobs = [
     ...new Set(
       $('p-jobs')
@@ -1180,6 +1202,128 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+/* ---- Paie, cumul annuel, T4 / RL-1 ---- */
+const CP = () => cfgPaye(P);
+const ligne = (l, v, cls = '') => `<div class="kv ${cls}"><span>${l}</span><b>${v}</b></div>`;
+function renderPaye() {
+  const c = CP(),
+    o = IO(),
+    p = prochainePaye(c, today()),
+    b = bulletin(S, c, p, o);
+  $('paye-t').textContent = `💵 Prochaine paye : ${dateCourte(p)}`;
+  $('paye').innerHTML =
+    `<p class="note">Période du ${esc(dateCourte(b.debut))} au ${esc(dateCourte(b.fin))} · ${b.n} quart(s) · ${b.heures} h · ${esc(FREQS[c.freq].lbl.toLowerCase())}</p>` +
+    ligne('Salaire', money(b.salaire)) +
+    ligne('Pourboires carte (versés sur la paie)', money(b.carte)) +
+    ligne('Cash déclaré (imposé, déjà en poche)', money(b.cashDecl)) +
+    (b.attrib ? ligne('Pourboires attribués (règle 8 %)', money(b.attrib)) : '') +
+    ligne('Brut imposable', money(b.brut), 'tot') +
+    ligne('Retenues estimées', '− ' + money(b.ded)) +
+    ligne('Dépôt net estimé', money(b.depot), 'tot ok') +
+    `<p class="note">Impôt féd. ${money(b.det.fed)} · Québec ${money(b.det.qc)} · RRQ ${money(b.det.rrq)} · AE ${money(b.det.ae)} · RQAP ${money(b.det.rqap)}. Le cash (${money(b.cash)}) n'est pas dans le dépôt. Estimation.</p>`;
+  const ps = bulletinsPasses(S, c, today(), o, 26).filter((x) => x.paye < p);
+  $('paye-p').innerHTML = ps.length
+    ? tbl(ps, [
+        ['Paye', (x) => esc(dateCourte(x.paye))],
+        ['Brut', (x) => money(x.brut)],
+        ['Retenues', (x) => money(x.ded)],
+        ['Dépôt', (x) => money(x.depot)],
+      ])
+    : '<p class="note">Aucune paye passée.</p>';
+}
+function optionsAnnees(sel) {
+  const ans = annees(S);
+  const y = +today().slice(0, 4);
+  if (!ans.includes(y)) ans.unshift(y);
+  const v = sel.value || String(y);
+  sel.innerHTML = ans.map((a) => `<option value="${a}">${a}</option>`).join('');
+  sel.value = ans.includes(+v) ? v : String(y);
+  return +sel.value;
+}
+function blocYTD(an) {
+  const t = cumulAnnee(S, an, today(), IO());
+  return (
+    `<p class="note">${t.n} quart(s) · ${t.heures} h${t.fraction < 1 ? ` · au ${esc(dateCourte(today()))}` : ''}</p>` +
+    ligne('Pourboires cash', money(t.cash)) +
+    ligne('Pourboires carte', money(t.carte)) +
+    (t.tipout ? ligne('Tip-out remis', '− ' + money(t.tipout)) : '') +
+    ligne('Salaire', money(t.salaire)) +
+    (t.attrib ? ligne('Attribués (règle 8 %)', money(t.attrib)) : '') +
+    ligne("Revenu d'emploi total", money(t.revenuEmploi), 'tot') +
+    ligne('Retenues estimées', '− ' + money(t.ded)) +
+    (t.fraction < 1 ? `<p class="note">Projection sur l'année : ${money(t.projection)} de revenu d'emploi.</p>` : '')
+  );
+}
+function renderYTD() {
+  $('ytd').innerHTML = blocYTD(optionsAnnees($('ytd-a')));
+  const an2 = optionsAnnees($('ytd2-a'));
+  $('ytd2').innerHTML = blocYTD(an2);
+  renderT4(an2);
+}
+function renderT4(an) {
+  const r = apercuT4(S, an, CP(), today(), IO());
+  const enCours = r.fraction < 1;
+  const col = (x, k) => (enCours ? [money(r.aDate[x][k]), money(r.projete[x][k])] : [money(r.aDate[x][k])]);
+  const th = enCours ? '<th>Case</th><th>À date</th><th>Année projetée</th>' : '<th>Case</th><th>Montant</th>';
+  const T4 = [
+    ['14', "Revenus d'emploi"],
+    ['16', 'RPC (hors Québec)'],
+    ['17', 'RRQ'],
+    ['18', 'Assurance-emploi'],
+    ['22', 'Impôt fédéral retenu'],
+    ['55', 'RQAP'],
+  ];
+  const RL = [
+    ['A', "Revenus d'emploi"],
+    ['B.A', 'RRQ'],
+    ['C', 'Assurance-emploi'],
+    ['H', 'RQAP'],
+    ['E', 'Impôt du Québec retenu'],
+  ];
+  const t = (x, rows) =>
+    `<table><tr>${th}</tr>${rows
+      .map(
+        ([k, l]) =>
+          `<tr><td>${k} · ${l}</td>${col(x, k)
+            .map((v) => `<td>${v}</td>`)
+            .join('')}</tr>`,
+      )
+      .join('')}</table>`;
+  const s = r.solde;
+  $('t4').innerHTML =
+    `<p class="note"><span class="pill">Estimation seulement</span> Calculé à partir de tes quarts, ${r.payes} paye(s) sur ${r.payesAn} en ${an} (année selon la date de paye). La case 14 / A inclut le cash déclaré et les pourboires attribués (règle des 8 %).</p>` +
+    `<h3>T4 (fédéral)</h3>${t('t4', T4)}<h3>Relevé 1 (Québec)</h3>${t('rl1', RL)}` +
+    ligne(`Retenu ${enCours ? '(projeté)' : ''}`, money(r.retenu)) +
+    ligne(`Dû réellement ${enCours ? '(projeté)' : ''}`, money(r.du.total)) +
+    ligne(
+      s > 0 ? 'Solde à payer estimé' : 'Remboursement estimé',
+      money(Math.abs(s)),
+      'tot ' + (s > 0 ? 'warn' : 'ok'),
+    ) +
+    `<p class="note">Fédéral ${money(r.soldeDet.fed)} · Québec ${money(r.soldeDet.qc)} · cotisations ${money(r.soldeDet.cotisations)} (+ = à payer). Hors crédits personnels (loyer, frais, REER…).</p>`;
+}
+function renderPeriode() {
+  if (!$('tp-du').value) {
+    const p = prochainePaye(CP(), today());
+    const b = bulletin([], CP(), p);
+    $('tp-du').value = b.debut;
+    $('tp-au').value = b.fin;
+  }
+  let du = $('tp-du').value,
+    au = $('tp-au').value;
+  if (du > au) [du, au] = [au, du];
+  const t = totalPeriode(S, du, au, AN(), IO());
+  $('tp').innerHTML =
+    `<p class="note">${t.n} quart(s) · ${t.heures} h</p>` +
+    ligne('Brut', money(t.brut)) +
+    ligne('Net estimé', money(t.net), 'tot ok') +
+    ligne('Cash', money(t.cash)) +
+    ligne('Carte', money(t.carte));
+}
+$('ytd-a').onchange = renderYTD;
+$('ytd2-a').onchange = renderYTD;
+$('tp-du').onchange = renderPeriode;
+$('tp-au').onchange = renderPeriode;
 /* ---- Import CSV d'une autre appli ---- */
 let IMP = null;
 const el = (tag, props = {}, kids = []) => {
@@ -1328,13 +1472,24 @@ function onb() {
       () =>
         `<p class="note">Salaire + pourboires nets. Les quarts sous l'objectif ressortent en rouge.</p><div class="chips" id="o-g"></div><input type="number" inputmode="decimal" id="o-gv" value="${P.goal}" aria-label="Objectif" style="margin-top:8px">`,
     ],
+    [
+      'Ta paie',
+      () =>
+        `<p class="note">Pour estimer ta prochaine paye. Période de 2 semaines du lundi au dimanche, payée le vendredi suivant.</p><label for="o-pf">Fréquence</label><select id="o-pf">${Object.entries(
+          FREQS,
+        )
+          .map(([k, f]) => `<option value="${k}"${k === P.payFreq ? ' selected' : ''}>${f.lbl}</option>`)
+          .join(
+            '',
+          )}</select><label for="o-pr">Prochaine paye</label><input type="date" id="o-pr" value="${esc(P.payRef)}">`,
+    ],
   ];
   $('onb')
     .querySelectorAll('.dots i')
     .forEach((d, i) => d.classList.toggle('on', i === O));
-  $('onb-t').textContent = O + 1 + '/3 · ' + st[O][0];
+  $('onb-t').textContent = O + 1 + '/4 · ' + st[O][0];
   $('onb-b').innerHTML = st[O][1]();
-  $('onb-n').textContent = O < 2 ? 'Suivant' : "C'est parti !";
+  $('onb-n').textContent = O < 3 ? 'Suivant' : "C'est parti !";
   if (O === 0)
     chips('o-r', Object.entries(ROLES), P.role, (v) => {
       P.role = v;
@@ -1361,7 +1516,12 @@ function onb() {
 $('onb-n').onclick = () => {
   if (O === 1) P.rates[P.role] = n($('o-t').value) || P.rates[P.role];
   if (O === 2) P.goal = n($('o-gv').value) || P.goal;
-  if (O < 2) {
+  if (O === 3) {
+    P.payFreq = $('o-pf').value;
+    P.payRef = $('o-pr').value || P.payRef;
+    P.payJour = new Date(P.payRef + 'T12:00:00').getDay();
+  }
+  if (O < 3) {
     O++;
     onb();
   } else {
@@ -1396,6 +1556,9 @@ $$('nav button[data-s]').forEach(
 function render() {
   renderLog();
   renderAccueil();
+  renderPaye();
+  renderYTD();
+  renderPeriode();
   renderGrille();
   renderQuarts();
   renderImpot();

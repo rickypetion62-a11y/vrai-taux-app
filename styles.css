@@ -846,3 +846,31 @@ pre.log {
 .doc ul {
   padding-left: 20px;
 }
+.kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+.kv.tot {
+  font-size: 1.05em;
+}
+.kv.ok b {
+  color: var(--green);
+}
+.kv.warn b {
+  color: var(--warn);
+}
+#t4 h3 {
+  font-size: 15px;
+  margin: 12px 0 4px;
+}
+.row > div {
+  min-width: 0;
+}
+input[type='date'] {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}

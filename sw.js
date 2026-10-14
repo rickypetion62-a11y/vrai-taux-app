@@ -1,5 +1,5 @@
 /* Service worker : cache versionné, hors ligne d'abord, mise à jour sur demande de l'utilisateur. */
-const VERSION = 'vraih-v7';
+const VERSION = 'vraih-v8';
 const FICHIERS = [
   './',
   'index.html',

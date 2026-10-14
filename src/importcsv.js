@@ -181,7 +181,8 @@ function empreinte(s) {
  * Convertit les lignes CSV en quarts v6, avec un rapport d'anomalies et des totaux source.
  * @param {string[][]} lignes
  * @param {Object<string,number>} map
- * @param {{emploiDefaut?:string, posteDefaut?:string, tauxDefaut?:number}} [o]
+ * @param {{emploiDefaut?:string, posteDefaut?:string, tauxDefaut?:number, tipoutImpot?:boolean}} [o]
+ *   tipoutImpot : la colonne Tip-out contient des retenues d'impôt (Just The Tips) ; tip-out mis à 0, valeur gardée en note.
  * @returns {{quarts:Object[], rejets:Object[], anomalies:Object[], totaux:Object}}
  */
 export function convertir(lignes, map, o = {}) {
@@ -189,7 +190,7 @@ export function convertir(lignes, map, o = {}) {
   const quarts = [],
     rejets = [],
     anomalies = [];
-  const tot = { lignes: lignes.length, heures: 0, salaire: 0, cash: 0, card: 0, tipout: 0, ventes: 0 };
+  const tot = { lignes: lignes.length, heures: 0, salaire: 0, cash: 0, card: 0, tipout: 0, retenue: 0, ventes: 0 };
   lignes.forEach((l, i) => {
     const no = i + 2;
     const date = lireDate(get(l, 'date'));
@@ -216,7 +217,8 @@ export function convertir(lignes, map, o = {}) {
     tot.salaire += sal;
     tot.cash += cash;
     tot.card += card;
-    tot.tipout += to;
+    if (o.tipoutImpot) tot.retenue += to;
+    else tot.tipout += to;
     tot.ventes += ventes;
     const job = get(l, 'job');
     const notes = [
@@ -224,6 +226,7 @@ export function convertir(lignes, map, o = {}) {
       get(l, 'notes'),
       'import ' + (o.source || 'CSV'),
       tauxDefaut && h > 0 ? 'taux par défaut' : '',
+      o.tipoutImpot && to ? `Retenue JTT : ${String(r2(to)).replace('.', ',')} $` : '',
     ]
       .filter(Boolean)
       .join(' · ');
@@ -238,7 +241,7 @@ export function convertir(lignes, map, o = {}) {
       sales: ventes ? String(ventes) : '',
       toDir: 'donne',
       toMode: 'montant',
-      toVal: String(to),
+      toVal: o.tipoutImpot ? '0' : String(to),
       job: !job || /^default job$/i.test(job) ? o.emploiDefaut || '' : job,
       notes,
       _t: 1,
@@ -246,7 +249,7 @@ export function convertir(lignes, map, o = {}) {
     if (q) quarts.push(q);
   });
   const d = quarts.map((q) => q.date).sort();
-  for (const k of ['heures', 'salaire', 'cash', 'card', 'tipout', 'ventes']) tot[k] = r2(tot[k]);
+  for (const k of ['heures', 'salaire', 'cash', 'card', 'tipout', 'retenue', 'ventes']) tot[k] = r2(tot[k]);
   tot.du = d[0] || null;
   tot.au = d[d.length - 1] || null;
   return { quarts, rejets, anomalies, totaux: tot };

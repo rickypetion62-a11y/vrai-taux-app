@@ -1194,6 +1194,7 @@ function apercuImport() {
     emploiDefaut: propreTxt($('csv-job').value),
     tauxDefaut: n($('csv-taux').value) || 13.3,
     source: IMP.source,
+    tipoutImpot: $('csv-ret').checked,
   });
   IMP.R = R;
   const T = totauxQuarts(R.quarts);
@@ -1205,7 +1206,7 @@ function apercuImport() {
     }),
     el('p', {
       className: 'note',
-      textContent: `Source : ${T.heures} h · pourboires cash ${money(R.totaux.cash)} · carte ${money(R.totaux.card)} · tip-out ${money(R.totaux.tipout)} · salaire ${money(R.totaux.salaire)}. Dans l'appli : total ${money(T.total)} · ${money(T.eff)}/h.`,
+      textContent: `Source : ${T.heures} h · pourboires cash ${money(R.totaux.cash)} · carte ${money(R.totaux.card)} · ${$('csv-ret').checked ? `retenues d'impôt ignorées ${money(R.totaux.retenue)} (tes déductions 2026 s'appliquent)` : `tip-out ${money(R.totaux.tipout)}`} · salaire ${money(R.totaux.salaire)}. Dans l'appli : total ${money(T.total)} · ${money(T.eff)}/h.`,
     }),
   );
   const tb = el('table');
@@ -1213,7 +1214,9 @@ function apercuImport() {
     el(
       'tr',
       {},
-      ['Date', 'Emploi', 'h', 'Cash', 'Carte', 'Tip-out'].map((h) => el('th', { textContent: h })),
+      ['Date', 'Emploi', 'h', 'Cash', 'Carte', $('csv-ret').checked ? 'Retenue (ignorée)' : 'Tip-out'].map((h) =>
+        el('th', { textContent: h }),
+      ),
     ),
   );
   for (const q of R.quarts.slice(0, 5))
@@ -1221,9 +1224,14 @@ function apercuImport() {
       el(
         'tr',
         {},
-        [q.date, q.job || '–', q.hours, money(n(q.cash)), money(n(q.card)), money(n(q.toVal))].map((v) =>
-          el('td', { textContent: String(v) }),
-        ),
+        [
+          q.date,
+          q.job || '–',
+          q.hours,
+          money(n(q.cash)),
+          money(n(q.card)),
+          $('csv-ret').checked ? (q.notes.match(/Retenue JTT : ([\d,]+)/) || [0, '0'])[1] + ' $' : money(n(q.toVal)),
+        ].map((v) => el('td', { textContent: String(v) })),
       ),
     );
   z.append(tb);
@@ -1275,6 +1283,7 @@ $('csv-f').onchange = async (e) => {
     IMP = { entetes, lignes, map, source };
     $('csv-zone').hidden = false;
     $('csv-src').textContent = `Format détecté : ${source} · ${lignes.length} lignes · ${entetes.length} colonnes`;
+    $('csv-ret').checked = source === 'Just The Tips';
     $('csv-map-d').open = map.date == null || (map.cash == null && map.card == null);
     grilleCorrespondance();
     apercuImport();
@@ -1285,6 +1294,7 @@ $('csv-f').onchange = async (e) => {
 };
 $('csv-job').oninput = () => IMP && apercuImport();
 $('csv-taux').oninput = () => IMP && apercuImport();
+$('csv-ret').onchange = () => IMP && apercuImport();
 $('csv-ok').onclick = () => {
   if (!IMP || !IMP.R) return;
   const avant = S.length;
